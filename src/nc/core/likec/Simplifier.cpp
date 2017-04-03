@@ -351,11 +351,11 @@ std::unique_ptr<Expression> Simplifier::simplify(std::unique_ptr<BinaryOperator>
          * will automatically be upgraded to the type of the left hand side
          * only works for integer types.
          */
-        if(auto src = node->right()->as<Typecast>()) {
+        if (auto src = node->right()->as<Typecast>()) {
             auto destType = typeCalculator_.getType(node->left().get());
             auto cstType = typeCalculator_.getType(src->operand().get());
-            if(destType->isInteger() && cstType->isInteger() && destType->size() >= cstType->size()) {
-                if(destType->as<IntegerType>()->isSigned() == cstType->as<IntegerType>()->isSigned()) {
+            if (destType->isInteger() && cstType->isInteger() && destType->size() >= cstType->size()) {
+                if (destType->as<IntegerType>()->isSigned() == cstType->as<IntegerType>()->isSigned()) {
                     node->right() = std::move(src->operand());
                     return simplify(std::move(node));
                 }
@@ -416,35 +416,24 @@ std::unique_ptr<MemberAccessOperator> Simplifier::simplify(std::unique_ptr<Membe
 
 std::unique_ptr<Expression> Simplifier::simplify(std::unique_ptr<Typecast> node) {
     node->operand() = simplify(std::move(node->operand()));
+
     /*
      * reinterpret_cast<int16_t>(*reinterpret_cast<uint16_t*>(&edi2))
      * will become *reinterpret_cast<int16_t*>(&edi2)
      */
-    if(node->operand()->is<UnaryOperator>() && node->type()->isInteger() && node->operand()->as<UnaryOperator>()->operatorKind() == UnaryOperator::DEREFERENCE) {
-        /*
-         * node's operand is dereference. node is a cast to an IntegerType
-         */
+    if (node->operand()->is<UnaryOperator>() &&
+        node->operand()->as<UnaryOperator>()->operatorKind() == UnaryOperator::DEREFERENCE &&
+        node->type()->isInteger()) {
         auto deref = node->operand()->as<UnaryOperator>();
-
-        if(deref->operand()->is<Typecast>()) {
-            /*
-             * we now know that this cast's operand is a dereference
-             * of a casted pointer
-             *
-             * we're going to check to see if the type of pointer it's casted to
-             * is compatible with the type this node is casting to
-             * i.e reinterpret_cast<int16_t>(*reinterpret_cast<uint16_t*>(&edi2))
-             * will become *reinterpret_cast<int16_t*>(&edi2)
-             */
-
-            auto innerCast = deref->operand()->as<Typecast>();
+        if (auto innerCast = deref->operand()->as<Typecast>()) {
             if (innerCast->type()->isPointer() && !node->type()->isPointer()) {
-                //inner cast is a pointer type
                 auto ptrType = innerCast->type()->as<PointerType>();
+                assert(ptrType);
                 if (ptrType->pointeeType()->size() == node->type()->size() && ptrType->pointeeType()->isInteger()) {
-                    deref->operand() = std::make_unique<Typecast>(Typecast::CastKind::REINTERPRET_CAST,
-                    typeCalculator_.tree().makePointerType(innerCast->type()->size(), node->type()),
-                                               std::move(innerCast->operand()));
+                    deref->operand() = std::make_unique<Typecast>(
+                        Typecast::REINTERPRET_CAST,
+                        typeCalculator_.tree().makePointerType(innerCast->type()->size(), node->type()),
+                        std::move(innerCast->operand()));
                     return simplify(std::move(node->operand()));
                 }
             }

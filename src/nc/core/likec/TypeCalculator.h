@@ -45,9 +45,13 @@ public:
     const Type *getType(const VariableIdentifier *node);
     const Type *getType(const UndeclaredIdentifier *node);
     const Type *getBinaryOperatorType(int operatorKind, const Expression *left, const Expression *right);
+<<<<<<< HEAD
     Tree& tree() {
         return tree_;
     }
+=======
+    Tree &tree() { return tree_; }
+>>>>>>> upstream/master
 };
 
 } // namespace likec
