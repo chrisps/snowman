@@ -1460,23 +1460,23 @@ private:
         }
 
         std::unique_ptr<core::ir::Term> result = createRegisterAccess(operand.base);
-
+        bool baseIsIndexToo = false;
         if (auto index = createRegisterAccess(operand.index)) {
             /* Scale can be 1, 2, 4, 8, or 0 (which means 1). */
 
-            assert(operand.scale == 1 || operand.scale == 2 ||
-                operand.scale == 4 || operand.scale == 8 || operand.scale == 0);
-
+            assert(operand.scale == 1 || operand.scale == 2 || operand.scale == 4 || operand.scale == 8 ||
+                   operand.scale == 0);
+            baseIsIndexToo = operand.base == operand.index && operand.base != UD_NONE;
             if (operand.scale > 1) {
                 index = std::make_unique<core::ir::BinaryOperator>(
-                    core::ir::BinaryOperator::MUL,
-                    std::move(index),
-                    std::make_unique<core::ir::Constant>(SizedValue(ud_obj_.adr_mode, operand.scale)),
+                    core::ir::BinaryOperator::MUL, baseIsIndexToo ? std::move(result) : std::move(index),
+                    std::make_unique<core::ir::Constant>(
+                        SizedValue(ud_obj_.adr_mode, (baseIsIndexToo) ? operand.scale + 1 : operand.scale)),
                     ud_obj_.adr_mode);
             }
-            if (result) {
-                result = std::make_unique<core::ir::BinaryOperator>(
-                    core::ir::BinaryOperator::ADD, std::move(result), std::move(index), ud_obj_.adr_mode);
+            if (result && !baseIsIndexToo) {
+                result = std::make_unique<core::ir::BinaryOperator>(core::ir::BinaryOperator::ADD, std::move(result),
+                                                                    std::move(index), ud_obj_.adr_mode);
             } else {
                 result = std::move(index);
             }
@@ -1488,8 +1488,8 @@ private:
             auto offset = std::make_unique<core::ir::Constant>(offsetValue);
 
             if (result) {
-                result = std::make_unique<core::ir::BinaryOperator>(
-                    core::ir::BinaryOperator::ADD, std::move(result), std::move(offset), ud_obj_.adr_mode);
+                result = std::make_unique<core::ir::BinaryOperator>(core::ir::BinaryOperator::ADD, std::move(result),
+                                                                    std::move(offset), ud_obj_.adr_mode);
             } else {
                 result = std::move(offset);
             }
