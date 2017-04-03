@@ -231,5 +231,13 @@ REG(tmp8,             TMP8,             31, 0, 8,  "Temporary 8-bit register")
 REG(tmp16,            TMP16,            31, 0, 16, "Temporary 16-bit register")
 REG(tmp32,            TMP32,            31, 0, 32, "Temporary 32-bit register")
 REG(tmp64,            TMP64,            31, 0, 64, "Temporary 64-bit register")
+REG(tmp128,           TMP128,           31, 0, 128, "Temporary 128-bit register")
+REG(tmp256,           TMP256,           31, 0, 256, "Temporary 256-bit register")
+
+REG(xtmp8,            XTMP8,            31, 0, 8,  "Temporary 8-bit register")
+REG(xtmp16,           XTMP16,           31, 0, 16, "Temporary 16-bit register")
+REG(xtmp32,           XTMP32,           31, 0, 32, "Temporary 32-bit register")
+REG(xtmp64,           XTMP64,           31, 0, 64, "Temporary 64-bit register")
+
 
 /* vim:set et sts=4 sw=4: */
