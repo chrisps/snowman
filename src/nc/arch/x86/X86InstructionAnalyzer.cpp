@@ -229,6 +229,67 @@ public:
                 }
                 break;
             }
+			case UD_Icdq: {
+				_[regizter(X86Registers::edx()) ^= signed_(regizter(X86Registers::eax())) >> constant(31)];
+				break;
+			}
+			case UD_Imovd: {
+				if (operand(1).size() < operand(0).size())
+					_[operand(0) ^= zero_extend(operand(1))];
+				else if (operand(1).size() == operand(0).size())
+					_[operand(0) ^= zero_extend(truncate(operand(1), 32))];
+				else
+					_[operand(0) ^= truncate(operand(1))];
+				break;
+			}
+			case UD_Imovdqa:
+			case UD_Imovdqu: {
+				_[operand(0) ^= operand(1)];
+				break;
+			}
+			case UD_Ipalignr: {
+				assert(operand(0).size() == operand(1).size());
+				assert(operand(0).size() == 64 || operand(0).size() == 128);
+				auto shiftFactor = constant(ud_obj_.operand[2].lval.ubyte * CHAR_BIT);
+
+				auto opndSize = operand(0).size();
+				auto tempSize = opndSize * 2;
+
+				_[
+					operand(0) ^= truncate( unsigned_(
+								((zero_extend(operand(0), tempSize)) << constant(opndSize)) | zero_extend(operand(1), tempSize)
+							) >> shiftFactor, opndSize)
+				 ];
+
+				break;
+			}
+			case UD_Ipor: {
+				_[operand(0) ^= operand(0) | operand(1)];
+				break;
+			}
+			case UD_Ixorpd: {
+				_[operand(0) ^= operand(0) ^ operand(1)];
+				break;
+			}
+			case UD_Ixorps: {
+				_[operand(0) ^= operand(0) ^ operand(1)];
+				break;
+			}
+			case UD_Imovss: {
+				if (operand(1).size() < operand(0).size())
+					_[operand(0) ^= zero_extend(operand(1))];
+				else if (operand(1).size() == operand(0).size())
+					_[operand(0) ^= zero_extend(truncate(operand(1), 32))];
+				else
+					_[operand(0) ^= truncate(operand(1))];
+				break;
+			}
+			case UD_Imovups:
+			case UD_Imovaps:
+			case UD_Imovapd: {
+				_[operand(0) ^= operand(1)];
+				break;
+			}
             case UD_Iand: {
                 if (operandsAreTheSame(0, 1)) {
                     _[operand(0) ^= operand(0)];
